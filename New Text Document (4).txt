@@ -1,0 +1,122 @@
+from tkinter import *
+from sqlalchemy import create_engine, Column, String, Integer
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+import subprocess
+import hashlib
+from tkinter import messagebox
+engine = create_engine("sqlite:///Youtube.db", echo=True)
+Base = declarative_base()
+Session = sessionmaker(bind=engine)
+session = Session()
+
+
+class Human(Base):
+    __tablename__ = "human2"
+    id = Column(Integer, primary_key=True)
+    username = Column(String)
+    Email = Column(String)
+    password = Column(String)
+
+    def __init__(self, username="", Email="", password=""):
+        self.username = username
+        self.Email = Email
+        self.password = password
+
+
+Base.metadata.create_all(engine)
+
+
+class App(Frame):
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.master = master
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.user_var = StringVar()
+        self.pass_var = StringVar()
+
+        self.txt_user = Entry(self.master, textvariable=self.user_var, justify="center", bd=5, bg="White",
+                              font="Palatino_Linotype")
+        self.txt_user.place(x=400, y=210)
+
+        self.txt_pass = Entry(self.master, textvariable=self.pass_var, justify="center", bd=5, bg="White",
+                              font="Palatino_Linotype", show="•")
+        self.txt_pass.place(x=400, y=260)
+
+
+        self.lbl_name = Label(self.master, text=" Username or Email: ", font="Roboto_Lt", bg="White")
+        self.lbl_name.place(x=205, y=214)
+        self.lbl_pass = Label(self.master, text=" Password: ", font="Roboto_Lt", bg="White")
+        self.lbl_pass.place(x=287, y=260)
+
+        self.lbl_welcome_txt = Label(self.master, text="  Welcome back to ", font="Roboto_Lt", bg="White")
+        self.lbl_welcome_txt.place(x=287, y=20)
+
+
+
+
+        self.btn_lobin = Button(self.master, text="login", justify="center", font="Leelawadee")
+        self.btn_lobin.bind("<Button-1>", self.onclick_login)
+        self.btn_lobin.place(x=650, y=300)
+
+    def onclick_login(self, e):
+        if not self.check_input():
+            return
+
+        if check_credentials(self.user_var.get(), self.pass_var.get()):
+            messagebox.showinfo("Success", "Logged in successfully!")
+        else:
+            messagebox.showerror("Error", "Invalid username or password.")
+
+    def check_input(self):
+        if not self.user_var.get() or not self.pass_var.get():
+            messagebox.showerror("Error", "Please fill in all fields.")
+        if not self.user_var.get() or not self.pass_var.get():
+            messagebox.showerror("Error", "Please enter username and password.")
+            return False
+        return True
+        return False
+    def register(self, human):
+        session.add(human)
+        session.commit()
+def check_duplicate(username, email):
+    existing_user = session.query(Human).filter_by(username=username).first()
+    existing_email = session.query(Human).filter_by(Email=email).first()
+
+    if existing_user:
+        messagebox.showerror("Error", "This username already exists. Please choose a different username.")
+        return False
+    elif existing_email:
+        messagebox.showerror("Error", "This email address is already registered. Please use a different email.")
+        return False
+    else:
+        return True
+
+def check_credentials(username, password):
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()
+    user = session.query(Human).filter_by(username=username, password=hashed_password).first()
+    if user:
+        return True
+    else:
+        messagebox.showerror("Error", "Invalid username or password.")
+        return False
+if __name__ == "__main__":
+    form = Tk()
+    form.geometry("%dx%d+%d+%d" % (1000, 700, 250, 70))
+    form.title("YouTube")
+    form.iconbitmap('icon.ico')
+    form.configure(bg="White")
+    app1 = App(form)
+    form.resizable(False, False)
+
+    logo_image = PhotoImage(file=r'sss.png')
+    logo_image = logo_image.zoom(2)
+    logo_image = logo_image.subsample(3)
+    logo_label = Label(form, image=logo_image)
+    logo_label.place(x=300, y=50)
+
+    form.mainloop()
+    print("برنامه بسته شد.")
+
